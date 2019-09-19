@@ -3772,6 +3772,7 @@ void run_eckey_edge_case_test(void) {
     const secp256k1_pubkey *pubkeys[3];
     size_t len;
     int32_t ecount;
+    secp256k1_scalar tmp_s;
     /* Group order is too large, reject. */
     CHECK(secp256k1_ec_seckey_verify(ctx, orderc) == 0);
     VG_UNDEF(&pubkey, sizeof(pubkey));
@@ -3998,7 +3999,6 @@ void run_eckey_edge_case_test(void) {
     CHECK(secp256k1_ec_privkey_tweak_inv(ctx, ctmp2) == 1);
     CHECK(memcmp(ctmp, ctmp2, 32) == 0);
     /* Inverse of inverse */
-    secp256k1_scalar tmp_s;
     random_scalar_order_test(&tmp_s);
     secp256k1_scalar_get_b32(ctmp, &tmp_s);
     memcpy(ctmp2, ctmp, 32);
@@ -5272,6 +5272,7 @@ int main(int argc, char **argv) {
     run_ecdsa_end_to_end();
     run_ecdsa_edge_cases();
 #ifdef ENABLE_OPENSSL_TESTS
+    printf("run_ecdsa_openssl...\n");
     run_ecdsa_openssl();
 #endif
 
@@ -5281,31 +5282,38 @@ int main(int argc, char **argv) {
 #endif
 
 #ifdef ENABLE_MODULE_GENERATOR
+    printf("run_generator_tests...\n");
     run_generator_tests();
 #endif
 
 #ifdef ENABLE_MODULE_RANGEPROOF
+    printf("run_rangeproof_tests...\n");
     run_rangeproof_tests();
 #endif
 
 #ifdef ENABLE_MODULE_BULLETPROOF
+    printf("run_bulletproofs_tests...\n");
     run_bulletproofs_tests();
 #endif
 
 #ifdef ENABLE_MODULE_COMMITMENT
+    printf("run_commitment_tests...\n");
     run_commitment_tests();
 #endif
 
 #ifdef ENABLE_MODULE_AGGSIG
+    printf("run_aggsig_tests...\n");
     run_aggsig_tests();
 #endif
 
 #ifdef ENABLE_MODULE_WHITELIST
+    printf("run_whitelist_tests...\n");
     /* Key whitelisting tests */
     run_whitelist_tests();
 #endif
 
 #ifdef ENABLE_MODULE_SURJECTIONPROOF
+    printf("run_surjection_tests...\n");
     run_surjection_tests();
 #endif
 
