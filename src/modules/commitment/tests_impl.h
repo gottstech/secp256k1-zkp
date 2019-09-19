@@ -133,6 +133,31 @@ static void test_commitment_api(void) {
     CHECK(secp256k1_pedersen_commitment_serialize(sign, out2, &commit2) == 1);
     CHECK(memcmp(out, out2, 33) == 0);
 
+    /* Test commit with negative integers: 4-3 = 1 = 6-5 */
+    secp256k1_pedersen_commitment commit_a[2];
+    secp256k1_pedersen_commitment commit_b[2];
+    const secp256k1_pedersen_commitment *commit_ptr_a[2];
+    const secp256k1_pedersen_commitment *commit_ptr_b[2];
+
+    int32_t i = 0;
+    for (i=0; i<2; i++) {
+        commit_ptr_a[i] = &commit_a[i];
+        commit_ptr_b[i] = &commit_b[i];
+    }
+
+    CHECK(secp256k1_pedersen_commit_i(none, &commit_a[0], blind, 4, &secp256k1_generator_const_h, &secp256k1_generator_const_g) != 0);
+    CHECK(secp256k1_pedersen_commit_i(none, &commit_a[1], blind, -3, &secp256k1_generator_const_h, &secp256k1_generator_const_g) != 0);
+
+    CHECK(secp256k1_pedersen_commit_i(none, &commit_b[0], blind, 6, &secp256k1_generator_const_h, &secp256k1_generator_const_g) != 0);
+    CHECK(secp256k1_pedersen_commit_i(none, &commit_b[1], blind, -5, &secp256k1_generator_const_h, &secp256k1_generator_const_g) != 0);
+    CHECK(secp256k1_pedersen_verify_tally(none, &commit_ptr_a[0], 2, &commit_ptr_b[0], 2) != 0);
+
+    CHECK(secp256k1_pedersen_commit_i(none, &commit_a[0], blind, INT64_MAX, &secp256k1_generator_const_h, &secp256k1_generator_const_g) != 0);
+    CHECK(secp256k1_pedersen_commit_i(none, &commit_a[1], blind, INT64_MIN, &secp256k1_generator_const_h, &secp256k1_generator_const_g) != 0);
+    CHECK(secp256k1_pedersen_commit_i(none, &commit_b[0], blind, 0, &secp256k1_generator_const_h, &secp256k1_generator_const_g) != 0);
+    CHECK(secp256k1_pedersen_commit_i(none, &commit_b[1], blind, -1, &secp256k1_generator_const_h, &secp256k1_generator_const_g) != 0);
+    CHECK(secp256k1_pedersen_verify_tally(none, &commit_ptr_a[0], 2, &commit_ptr_b[0], 2) != 0);
+
     secp256k1_context_destroy(none);
     secp256k1_context_destroy(sign);
     secp256k1_context_destroy(vrfy);

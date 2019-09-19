@@ -13,8 +13,8 @@
 #include "group.h"
 #include "scalar.h"
 
-/* sec * G + value * G2. */
-SECP256K1_INLINE static void secp256k1_pedersen_ecmult(secp256k1_gej *rj, const secp256k1_scalar *sec, uint64_t value, const secp256k1_ge* value_gen, const secp256k1_ge* blind_gen) {
+/* sec * G +/- value * G2. */
+SECP256K1_INLINE static void secp256k1_pedersen_ecmult_generic(secp256k1_gej *rj, const secp256k1_scalar *sec, uint64_t value, const secp256k1_ge* value_gen, const secp256k1_ge* blind_gen, int is_minus) {
     secp256k1_scalar vs;
     secp256k1_gej bj;
     secp256k1_ge bp;
@@ -22,6 +22,9 @@ SECP256K1_INLINE static void secp256k1_pedersen_ecmult(secp256k1_gej *rj, const 
     secp256k1_scalar_set_u64(&vs, value);
     secp256k1_ecmult_const(rj, value_gen, &vs, 64);
     secp256k1_ecmult_const(&bj, blind_gen, sec, 256);
+    if (is_minus){
+        secp256k1_gej_neg(rj, rj);
+    }
 
     /* zero blinding factor indicates that we are not trying to be zero-knowledge,
      * so not being constant-time in this case is OK. */
@@ -33,6 +36,12 @@ SECP256K1_INLINE static void secp256k1_pedersen_ecmult(secp256k1_gej *rj, const 
     secp256k1_gej_clear(&bj);
     secp256k1_ge_clear(&bp);
     secp256k1_scalar_clear(&vs);
+}
+
+/* sec * G + value * G2. */
+SECP256K1_INLINE static void secp256k1_pedersen_ecmult(secp256k1_gej *rj, const secp256k1_scalar *sec, uint64_t value, const secp256k1_ge* value_gen, const secp256k1_ge* blind_gen) {
+
+    secp256k1_pedersen_ecmult_generic(rj, sec, value, value_gen, blind_gen, 0);
 }
 
 SECP256K1_INLINE static void secp256k1_pedersen_blind_ecmult(secp256k1_gej *rj, const secp256k1_scalar *sec, const secp256k1_scalar *value, const secp256k1_ge* value_gen, const secp256k1_ge* blind_gen) {

@@ -81,6 +81,18 @@ SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_pedersen_commit(
   const secp256k1_generator *blind_gen
 ) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(5) SECP256K1_ARG_NONNULL(6);
 
+/** Generate a Pedersen commitment.
+ *  Same as secp256k1_pedersen_commit() except 'v' is int64 instead of uint64 .
+ */
+SECP256K1_API SECP256K1_WARN_UNUSED_RESULT int secp256k1_pedersen_commit_i(
+  const secp256k1_context* ctx,
+  secp256k1_pedersen_commitment *commit,
+  const unsigned char *blind,
+  int64_t value,
+  const secp256k1_generator *value_gen,
+  const secp256k1_generator *blind_gen
+) SECP256K1_ARG_NONNULL(1) SECP256K1_ARG_NONNULL(2) SECP256K1_ARG_NONNULL(3) SECP256K1_ARG_NONNULL(5) SECP256K1_ARG_NONNULL(6);
+
 /** Generate a Pedersen commitment from two blinding factors.
  *  Returns 1: Commitment successfully created.
  *          0: Error. The blinding factor is larger than the group order

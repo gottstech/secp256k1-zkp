@@ -5215,6 +5215,7 @@ int main(int argc, char **argv) {
 
 #ifndef USE_NUM_NONE
     /* num tests */
+    printf("run_num_smalltests...\n");
     run_num_smalltests();
 #endif
 
@@ -5246,6 +5247,7 @@ int main(int argc, char **argv) {
 
     /* endomorphism tests */
 #ifdef USE_ENDOMORPHISM
+    printf("run_endomorphism_tests...\n");
     run_endomorphism_tests();
 #endif
 
@@ -5257,11 +5259,13 @@ int main(int argc, char **argv) {
 
 #ifdef ENABLE_MODULE_ECDH
     /* ecdh tests */
+    printf("run_ecdh_tests...\n");
     run_ecdh_tests();
 #endif
 
 #ifdef ENABLE_MODULE_SCHNORRSIG
     /* Schnorrsig tests */
+    printf("run_schnorrsig_tests...\n");
     run_schnorrsig_tests();
 #endif
 
@@ -5278,6 +5282,7 @@ int main(int argc, char **argv) {
 
 #ifdef ENABLE_MODULE_RECOVERY
     /* ECDSA pubkey recovery tests */
+    printf("run_recovery_tests...\n");
     run_recovery_tests();
 #endif
 
@@ -5307,8 +5312,8 @@ int main(int argc, char **argv) {
 #endif
 
 #ifdef ENABLE_MODULE_WHITELIST
-    printf("run_whitelist_tests...\n");
     /* Key whitelisting tests */
+    printf("run_whitelist_tests...\n");
     run_whitelist_tests();
 #endif
 

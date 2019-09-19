@@ -8,6 +8,7 @@
 #define SECP256K1_MODULE_COMMITMENT_MAIN
 
 #include "group.h"
+#include "util.h"
 
 #include "modules/commitment/pedersen_impl.h"
 
@@ -77,8 +78,10 @@ int secp256k1_pedersen_commitment_serialize(const secp256k1_context* ctx, unsign
     return 1;
 }
 
-/* Generates a pedersen commitment: *commit = blind * G + value * G2. The blinding factor is 32 bytes.*/
-int secp256k1_pedersen_commit(const secp256k1_context* ctx, secp256k1_pedersen_commitment *commit, const unsigned char *blind, uint64_t value, const secp256k1_generator* value_gen, const secp256k1_generator* blind_gen) {
+/* Generates a pedersen commitment: *commit = blind * G +/- value * G2. The blinding factor is 32 bytes.
+ * '+/-' depends on the flag 'is_minus'.
+ */
+static int secp256k1_pedersen_commit_generic(const secp256k1_context* ctx, secp256k1_pedersen_commitment *commit, const unsigned char *blind, uint64_t value, const secp256k1_generator* value_gen, const secp256k1_generator* blind_gen, int is_minus) {
     secp256k1_ge value_genp;
     secp256k1_ge blind_genp;
     secp256k1_gej rj;
@@ -95,7 +98,7 @@ int secp256k1_pedersen_commit(const secp256k1_context* ctx, secp256k1_pedersen_c
     secp256k1_generator_load(&blind_genp, blind_gen);
     secp256k1_scalar_set_b32(&sec, blind, &overflow);
     if (!overflow) {
-        secp256k1_pedersen_ecmult(&rj, &sec, value, &value_genp, &blind_genp);
+        secp256k1_pedersen_ecmult_generic(&rj, &sec, value, &value_genp, &blind_genp, is_minus);
         if (!secp256k1_gej_is_infinity(&rj)) {
             secp256k1_ge_set_gej(&r, &rj);
             secp256k1_pedersen_commitment_save(commit, &r);
@@ -106,6 +109,24 @@ int secp256k1_pedersen_commit(const secp256k1_context* ctx, secp256k1_pedersen_c
     }
     secp256k1_scalar_clear(&sec);
     return ret;
+}
+
+/* Generates a pedersen commitment: *commit = blind * G + value * G2. The blinding factor is 32 bytes.*/
+int secp256k1_pedersen_commit(const secp256k1_context* ctx, secp256k1_pedersen_commitment *commit, const unsigned char *blind, uint64_t value, const secp256k1_generator* value_gen, const secp256k1_generator* blind_gen) {
+    return secp256k1_pedersen_commit_generic(ctx, commit, blind, value, value_gen, blind_gen, 0);
+}
+
+/** Generate a Pedersen commitment.
+ *  Same as secp256k1_pedersen_commit() except 'v' is int64 instead of uint64 .
+ */
+int secp256k1_pedersen_commit_i(const secp256k1_context* ctx, secp256k1_pedersen_commitment *commit, const unsigned char *blind, int64_t value, const secp256k1_generator* value_gen, const secp256k1_generator* blind_gen) {
+    if (value >= 0) {
+        return secp256k1_pedersen_commit_generic(ctx, commit, blind, (uint64_t)value, value_gen, blind_gen, 0);
+    } else {
+        uint64_t p_value;
+        secp256k1_sign_and_abs64(&p_value, value);
+        return secp256k1_pedersen_commit_generic(ctx, commit, blind, p_value, value_gen, blind_gen, 1);
+    }
 }
 
 /* Generates a pedersen commitment: *commit = blind * G + value * G2. The blinding factor is 32 bytes.*/
