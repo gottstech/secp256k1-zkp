@@ -24,6 +24,17 @@ static void test_commitment_api(void) {
     unsigned char blind_out[32];
     const unsigned char *blind_ptr = blind;
     unsigned char *blind_out_ptr = blind_out;
+
+    secp256k1_scalar tmp_s;
+    unsigned char out[33];
+    unsigned char out2[33];
+
+    secp256k1_pedersen_commitment commit_a[2];
+    secp256k1_pedersen_commitment commit_b[2];
+    const secp256k1_pedersen_commitment *commit_ptr_a[2];
+    const secp256k1_pedersen_commitment *commit_ptr_b[2];
+    int32_t i = 0;
+
     uint64_t val = secp256k1_rand32();
 
     secp256k1_context *none = secp256k1_context_create(SECP256K1_CONTEXT_NONE);
@@ -96,9 +107,6 @@ static void test_commitment_api(void) {
 
     /* Test commit with integer and blinding factor */
     /* Value: 1*/
-    secp256k1_scalar tmp_s;
-    unsigned char out[33];
-    unsigned char out2[33];
     random_scalar_order_test(&tmp_s);
     secp256k1_scalar_get_b32(blind, &tmp_s);
     memset(blind_out, 0, 32);
@@ -134,12 +142,6 @@ static void test_commitment_api(void) {
     CHECK(memcmp(out, out2, 33) == 0);
 
     /* Test commit with negative integers: 4-3 = 1 = 6-5 */
-    secp256k1_pedersen_commitment commit_a[2];
-    secp256k1_pedersen_commitment commit_b[2];
-    const secp256k1_pedersen_commitment *commit_ptr_a[2];
-    const secp256k1_pedersen_commitment *commit_ptr_b[2];
-
-    int32_t i = 0;
     for (i=0; i<2; i++) {
         commit_ptr_a[i] = &commit_a[i];
         commit_ptr_b[i] = &commit_b[i];

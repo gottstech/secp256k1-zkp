@@ -31,7 +31,7 @@ typedef struct {
     bench_bulletproof_t *common;
     secp256k1_pedersen_commitment **commit;
     const unsigned char **blind;
-    size_t *value;
+    uint64_t *value;
     size_t n_commits;
     size_t nbits;
 } bench_bulletproof_rangeproof_t;
@@ -54,7 +54,7 @@ static void bench_bulletproof_common_setup(bench_bulletproof_t *data) {
 static void bench_bulletproof_rangeproof_setup(void* arg) {
     bench_bulletproof_rangeproof_t *data = (bench_bulletproof_rangeproof_t*)arg;
     size_t i;
-    size_t v;
+    uint64_t v;
 
     unsigned char blind[32] = "and my kingdom too for a blinder";
 
@@ -142,7 +142,7 @@ static void bench_bulletproof_rangeproof_verify(void* arg) {
 
 static void bench_bulletproof_rangeproof_rewind_succeed(void* arg) {
     size_t i;
-    size_t v;
+    uint64_t v;
     unsigned char blind[32];
     bench_bulletproof_rangeproof_t *data = (bench_bulletproof_rangeproof_t*)arg;
 
@@ -153,7 +153,7 @@ static void bench_bulletproof_rangeproof_rewind_succeed(void* arg) {
 
 static void bench_bulletproof_rangeproof_rewind_fail(void* arg) {
     size_t i;
-    size_t v;
+    uint64_t v;
     unsigned char blind[32];
     bench_bulletproof_rangeproof_t *data = (bench_bulletproof_rangeproof_t*)arg;
 
