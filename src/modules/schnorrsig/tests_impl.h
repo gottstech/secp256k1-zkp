@@ -711,6 +711,83 @@ void test_schnorrsig_sign_verify(secp256k1_scratch_space *scratch) {
 }
 #undef N_SIGS
 
+#define N_SIGS  200
+/* Creates N_SIGS valid signatures and verifies them with verify.
+ * Then flips some bits and checks that verification now fails. */
+void test_comsig_sign_verify() {
+    const unsigned char sk[32] = "shhhhhhhh! this key is a secret.";
+    unsigned char msg[N_SIGS][32];
+    secp256k1_comsig sig[N_SIGS];
+    secp256k1_pubkey pubkey[N_SIGS];
+    size_t i;
+    const secp256k1_comsig *sig_arr[N_SIGS];
+    const unsigned char *msg_arr[N_SIGS];
+    const secp256k1_pubkey *pk_arr[N_SIGS];
+    secp256k1_pubkey pk;
+    unsigned char value[32];
+    unsigned char nonce_seed[32];
+
+    CHECK(secp256k1_ec_pubkey_create(ctx, &pk, sk));
+
+    {
+        unsigned char msg1[32];
+        unsigned char zero[32];
+        secp256k1_comsig sig1;
+        secp256k1_schnorrsig sig2;
+        secp256k1_pubkey pubkey1;
+
+        secp256k1_rand256(msg1);
+        CHECK(secp256k1_schnorrsig_sign(ctx, &sig2, NULL, msg1, sk, NULL, NULL));
+
+        /* test of commitment on value zero */
+        memset(zero, 0, 32);
+        secp256k1_rand256(nonce_seed);
+        CHECK(secp256k1_comsig_sign(ctx, &sig1, &pubkey1, NULL, msg1, sk, zero, NULL, nonce_seed) == 0);
+
+        /* test of commitment on a random value */
+        secp256k1_rand256(value);
+        secp256k1_rand256(nonce_seed);
+        CHECK(secp256k1_comsig_sign(ctx, &sig1, &pubkey1, NULL, msg1, sk, value, NULL, nonce_seed));
+        CHECK(secp256k1_comsig_verify(ctx, &sig1, msg1, &pubkey1));
+    }
+
+    for (i = 0; i < N_SIGS; i++) {
+        secp256k1_rand256(value);
+        secp256k1_rand256(msg[i]);
+        secp256k1_rand256(nonce_seed);
+        CHECK(secp256k1_comsig_sign(ctx, &sig[i], &pubkey[i], NULL, msg[i], sk, value, NULL, nonce_seed));
+        CHECK(secp256k1_comsig_verify(ctx, &sig[i], msg[i], &pubkey[i]));
+        sig_arr[i] = &sig[i];
+        msg_arr[i] = msg[i];
+        pk_arr[i] = &pubkey[i];
+    }
+
+    {
+        /* Flip a few bits in the signature and in the message and check that
+         * verify and verify_batch fail */
+        size_t sig_idx = secp256k1_rand_int(4);
+        size_t byte_idx = secp256k1_rand_int(32);
+        unsigned char xorbyte = secp256k1_rand_int(254)+1;
+        sig[sig_idx].data[byte_idx] ^= xorbyte;
+        CHECK(!secp256k1_comsig_verify(ctx, &sig[sig_idx], msg[sig_idx], &pubkey[sig_idx]));
+        sig[sig_idx].data[byte_idx] ^= xorbyte;
+
+        byte_idx = secp256k1_rand_int(32);
+        sig[sig_idx].data[32+byte_idx] ^= xorbyte;
+        CHECK(!secp256k1_comsig_verify(ctx, &sig[sig_idx], msg[sig_idx], &pubkey[sig_idx]));
+        sig[sig_idx].data[32+byte_idx] ^= xorbyte;
+
+        byte_idx = secp256k1_rand_int(32);
+        msg[sig_idx][byte_idx] ^= xorbyte;
+        CHECK(!secp256k1_comsig_verify(ctx, &sig[sig_idx], msg[sig_idx], &pubkey[sig_idx]));
+        msg[sig_idx][byte_idx] ^= xorbyte;
+
+        /* Check that above bitflips have been reversed correctly */
+        CHECK(secp256k1_comsig_verify(ctx, &sig[sig_idx], msg[sig_idx], &pubkey[sig_idx]));
+    }
+}
+#undef N_SIGS
+
 void run_schnorrsig_tests(void) {
     secp256k1_scratch_space *scratch = secp256k1_scratch_space_create(ctx, 1024 * 1024);
 
@@ -719,6 +796,8 @@ void run_schnorrsig_tests(void) {
     test_schnorrsig_bip_vectors(scratch);
     test_schnorrsig_sign();
     test_schnorrsig_sign_verify(scratch);
+
+    test_comsig_sign_verify();
 
     secp256k1_scratch_space_destroy(scratch);
 }
